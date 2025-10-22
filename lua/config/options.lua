@@ -1,2 +1,2 @@
-vim.opt.guicursor = "n-v-c:block"
+vim.opt.guicursor = "i:ver25"
 vim.g.autoformat = false
