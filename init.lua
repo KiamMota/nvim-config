@@ -1,3 +1,3 @@
-require("lua.rrnvim").setup()
+require("rrnvim").setup()
 require("config.lazy")
 require("config.autocmds")

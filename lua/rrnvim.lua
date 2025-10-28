@@ -28,8 +28,6 @@ local function run_rr(args)
     return vim.fn.system(cmd)
 end
 
-
-
 function M.replace_for_this_directory(old_word, new_word, recursive)
     local cwd = vim.fn.getcwd()
     run_rr({old_word or defaults.old_word, new_word or defaults.new_word, cwd, recursive})
@@ -129,8 +127,8 @@ local function local_word_replace()
 end
 
 function M.setup()
-  vim.keymap.set('x', 'lwr',local_word_replace)
-  vim.keymap.set('x', 'lgr', global_word_replace)
+  vim.keymap.set('x', 'wlr',local_word_replace)
+  vim.keymap.set('x', 'wgr', global_word_replace)
     vim.api.nvim_create_user_command('RR', function(opts)
         local fargs = opts.fargs
         run_rr(fargs)
