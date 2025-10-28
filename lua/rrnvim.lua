@@ -8,13 +8,12 @@ local defaults = {
     verbosity = nil,
 }
 
-
 local function find_rr_on_system()
   return vim.fn.executable("rr") == 1
 end
 
 local function rr_notify(arg)
-  vim.notify("rr.nvim:" .. arg, vim.log.levels.INFO, {timeout=2000})
+  vim.notify("rr.nvim: " .. arg, vim.log.levels.INFO, {timeout=2000})
 end
 
 local function run_rr(args)
@@ -24,7 +23,6 @@ local function run_rr(args)
             table.insert(cmd, v)
         end
     end
-
     return vim.fn.system(cmd)
 end
 
@@ -56,6 +54,40 @@ end
 
 local function get_new_word()
   return vim.fn.input("new word: ")
+end
+
+local function global_word_replace_recursive()
+  if not find_rr_on_system() then 
+    rr_notify("rr is not on system!")
+    return
+  end
+  
+  local old_word = get_selected_word() or ""
+  local new_word = get_new_word() or ""
+  local path = vim.api.nvim_buf_get_name(0)
+  local context = vim.fn.fnamemodify(vim.fn.resolve(path), ":p:h")
+
+  if old_word == "" then
+    rr_notify("No words selected.")
+    return
+  end
+  if new_word == "" then
+    rr_notify("No word to replace.")
+    return
+  end
+  if path == "" then
+    rr_notify("buffer is not associated with a file.")
+    return
+  end
+
+  run_rr({old_word, new_word, context, true})
+
+  vim.api.nvim_buf_call(0, function()
+    vim.cmd("edit!")
+  end)
+
+  rr_notify("replacement completed and buffer reloaded.")
+
 end
 
 local function global_word_replace()
@@ -94,8 +126,6 @@ local function global_word_replace()
 
 end
 
-
-
 local function local_word_replace()
   if not find_rr_on_system() then
     rr_notify("rr is not on system!")
@@ -126,12 +156,23 @@ local function local_word_replace()
   end)
 end
 
-function M.setup()
-  vim.keymap.set('x', 'wlr',local_word_replace)
-  vim.keymap.set('x', 'wgr', global_word_replace)
-    vim.api.nvim_create_user_command('RR', function(opts)
-        local fargs = opts.fargs
-        run_rr(fargs)
+function M.setup(opts)
+    opts = opts or {}
+    local rl = opts.replace_local or '<leader>rl'
+    local rg = opts.replace_global or '<leader>rg'
+    local rgv = opts.replace_global_recursive or '<leader>rgv'
+
+    vim.keymap.set('x', rl, local_word_replace)
+    vim.keymap.set('x', rg, global_word_replace)
+    vim.keymap.set('x', rgv, global_word_replace_recursive)
+
+    vim.api.nvim_create_user_command('RR', function(cmd_opts)
+        local fargs = cmd_opts.fargs
+        if opts.custom_rr then
+            opts.custom_rr(fargs)
+        else
+            run_rr(fargs)
+        end
     end, { nargs = '*' })
 end
 
