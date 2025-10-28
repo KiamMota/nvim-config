@@ -8,6 +8,11 @@ local defaults = {
     verbosity = nil,
 }
 
+
+local function find_rr_on_system()
+  return vim.fn.executable("rr") == 1
+end
+
 local function rr_notify(arg)
   vim.notify("rr.nvim:" .. arg, vim.log.levels.INFO, {timeout=2000})
 end
@@ -24,14 +29,6 @@ local function run_rr(args)
 end
 
 
-function M.replace_for_this_buffer(old_word, new_word)
-    local buf_name = vim.api.nvim_buf_get_name(0)
-    if buf_name == "" then
-      rr_notify("file without associated buffer")
-      return
-    end
-    run_rr({old_word or defaults.old_word, new_word or defaults.new_word, buf_name})
-end
 
 function M.replace_for_this_directory(old_word, new_word, recursive)
     local cwd = vim.fn.getcwd()
@@ -49,20 +46,27 @@ local function get_selected_word()
   local save_regtype = vim.fn.getregtype('"')
 
   vim.cmd('normal! "vy')
-
   local selection = vim.fn.getreg('v')
 
   vim.fn.setreg('"', save_reg, save_regtype)
 
+  -- Remove espaços à esquerda até encontrar a primeira letra/número
+  selection = selection:gsub("^%s*(%S.*)", "%1")
+
   return selection
 end
-
 
 local function get_new_word()
   return vim.fn.input("new word: ")
 end
 
 local function global_word_replace()
+
+  if not find_rr_on_system() then
+    rr_notify("rr is not on system!")
+    return
+  end
+
   local old_word = get_selected_word() or ""
   local new_word = get_new_word() or ""
   local path = vim.api.nvim_buf_get_name(0)
@@ -95,6 +99,10 @@ end
 
 
 local function local_word_replace()
+  if not find_rr_on_system() then
+    rr_notify("rr is not on system!")
+    return
+  end 
   local old_word = get_selected_word()
   vim.print("old word:" .. old_word)
   local new_word = vim.fn.input("new word: ")
