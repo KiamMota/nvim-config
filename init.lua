@@ -1,3 +1,4 @@
-require("rrnvim").setup()
 require("config.lazy")
-require("config.autocmds")
+
+vim.notify("welcome again, Kiam Mota!", vim.log.levels.INFO, nil)
+vim.cmd("colorscheme everforest")
